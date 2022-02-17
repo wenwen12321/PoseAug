@@ -45,6 +45,12 @@ def get_parse_args():
     parser.add_argument('--s1only', default=False, type=lambda x: (str(x).lower() == 'true'), help='train S1 only')
     parser.add_argument('--num_workers', default=2, type=int, metavar='N', help='num of workers for data loading')
 
+
+    # For Anatomy
+    parser.add_argument('-bi', '--boneindex', default='16,15,15,14,13,12,12,11,10,9,9,8,8,7,8,11,8,14,7,0,3,2,2,1,6,5,5,4,1,0,4,0', type=str, metavar='LIST', help='bone index (each two indexs correspond to the two joints a bone)')
+    parser.add_argument('-tem', '--temperature', default='10', type=float, metavar='H', help='temperature (attention degree) of the bone length attention module')
+    parser.add_argument('-lt', '--randnumtest', default=50, type=int, metavar='N', help='number of randomly sampled frames for bone length prediction for inference (causal mode)')
+    
     args = parser.parse_args()
 
     return args

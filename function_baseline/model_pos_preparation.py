@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import, division
 
 import glob
+import pickle
 
 import torch
 
@@ -38,9 +39,23 @@ def model_pos_preparation(args, dataset, device):
                                              dropout=0.25, channels=1024)
     elif args.posenet_name == 'anatomy':
         filter_widths = [1]
+        print('Loading 2D keypoint visibility score...')
+        #the visibility scores are predicted by Alphapose
+        with open('data/score.pkl', 'rb') as f:
+            score = pickle.load(f)
+
+        #n joints, (n-1) bones, 2(n-1) indexs
+        print('Loading bone index...')
+        # boneindextemp = args.boneindex.split(',')
+        default_boneindex = '16,15,15,14,13,12,12,11,10,9,9,8,8,7,8,11,8,14,7,0,3,2,2,1,6,5,5,4,1,0,4,0' # taking from anatomy argument
+        boneindextemp = default_boneindex.split(',')
+        boneindex = []
+        for i in range(0,len(boneindextemp),2):
+            boneindex.append([int(boneindextemp[i]), int(boneindextemp[i+1])])
+        
         for stage_id in range(args.stages):
             filter_widths.append(1)  # filter_widths = [1, 1, 1, 1, 1]
-        model_pos = TemporalModelOptimized1f_anatomy(16, 2, 15, filter_widths=filter_widths, causal=False,
+        model_pos = TemporalModelOptimized1f_anatomy(num_joints_in=16, in_features=2, num_joints_out=15, boneindex=boneindex, temperature=10, randnumtest=50 ,filter_widths=filter_widths, causal=False,
                                              dropout=0.25, channels=1024)
     else:
         assert False, 'posenet_name invalid'

@@ -24,6 +24,7 @@ this code is used to pretrain the baseline model
 2. VideoPose
 3. SemGCN
 4. ST-GCN
+5. Anatomy
 code are modified from https://github.com/garyzhao/SemGCN
 """
 

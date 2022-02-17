@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch
 torch.backends.cudnn.benchmark=True
 from torch.autograd import Variable
-from common.bone import *
+from models_baseline.anatomy.bone import *
 
 class TemporalModelBase(nn.Module):
     """
@@ -64,9 +64,35 @@ class TemporalModelBase(nn.Module):
             next_dilation *= self.filter_widths[i]
         return frames
         
+    # def forward(self, x):
+    #     assert len(x.shape) == 4
+    #     assert x.shape[-2] == self.num_joints_in
+        
+    #     sz = x.shape[:3]
+    #     x = x.view(x.shape[0], x.shape[1], -1)
+    #     x = x.permute(0, 2, 1)
+        
+    #     x = self._forward_blocks(x)
+        
+    #     x = x.permute(0, 2, 1)
+    #     x = x.view(sz[0], -1, self.num_joints_out, 3)
+        
+    #     return x
+
+
     def forward(self, x):
+        """
+        input: bx16x2 / bx32
+        output: bx16x3
+        """
+        if len(x.shape) == 2:
+            x = x.view(x.shape[0], 16, 2)
+        # pre-processing
+        x = x.view(x.shape[0], 1, 16, 2)
+
         assert len(x.shape) == 4
         assert x.shape[-2] == self.num_joints_in
+        assert x.shape[-1] == self.in_features
         
         sz = x.shape[:3]
         x = x.view(x.shape[0], x.shape[1], -1)
@@ -76,8 +102,13 @@ class TemporalModelBase(nn.Module):
         
         x = x.permute(0, 2, 1)
         x = x.view(sz[0], -1, self.num_joints_out, 3)
+
+        # post process
+        x = x.view(sz[0], self.num_joints_out * 3)
+        # out: 15 joint ==> 16 joint
+        out = torch.cat([torch.zeros_like(x)[:,:3], x], 1).view(sz[0], 16, 3)  # Pad hip joint (0,0,0)
+        return out 
         
-        return x    
 
 
 
@@ -93,7 +124,9 @@ class TemporalModel(TemporalModelBase):
     with the reference implementation.
     """
 
-    def __init__(self, num_joints_in, in_features, num_joints_out, boneindex, temperature, randnumtest, filter_widths, causal=False, dropout=0.25, channels=1024, dense=False):
+    def __init__(self, num_joints_in, in_features, num_joints_out, 
+                boneindex, temperature, randnumtest, # only anatomy got this three arguments (doesn't videopose )
+                filter_widths, causal=False, dropout=0.25, channels=1024, dense=False):
         """
         Initialize this model.
 
@@ -291,13 +324,14 @@ class TemporalModel(TemporalModelBase):
 
 
 
-class TemporalModelOptimized1f(TemporalModelBase):
+class TemporalModelOptimized1f_anatomy(TemporalModelBase):
     """
     Reference 3D pose estimation model with temporal convolutions.
     This implementation can be used for all use-cases.
     """
 
-    def __init__(self, num_joints_in, in_features, num_joints_out, boneindex, temperature, 
+    def __init__(self, num_joints_in, in_features, num_joints_out, 
+                 boneindex, temperature, randnumtest,
                  filter_widths, causal=False, dropout=0.25, channels=1024):
         """
         Initialize this model.
