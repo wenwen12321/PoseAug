@@ -28,6 +28,7 @@ This code is used to train PoseAug model
 2. VideoPose
 3. SemGCN
 4. ST-GCN
+5. Anatomy
 '''
 
 

@@ -9,6 +9,7 @@ from models_baseline.gcn.sem_gcn import SemGCN
 from models_baseline.mlp.linear_model import LinearModel, init_weights
 from models_baseline.models_st_gcn.st_gcn_single_frame_test import WrapSTGCN
 from models_baseline.videopose.model_VideoPose3D import TemporalModelOptimized1f
+from models_baseline.anatomy.model_anatomy import TemporalModelOptimized1f_anatomy
 
 
 def model_pos_preparation(args, dataset, device):
@@ -34,6 +35,12 @@ def model_pos_preparation(args, dataset, device):
         for stage_id in range(args.stages):
             filter_widths.append(1)  # filter_widths = [1, 1, 1, 1, 1]
         model_pos = TemporalModelOptimized1f(16, 2, 15, filter_widths=filter_widths, causal=False,
+                                             dropout=0.25, channels=1024)
+    elif args.posenet_name == 'anatomy':
+        filter_widths = [1]
+        for stage_id in range(args.stages):
+            filter_widths.append(1)  # filter_widths = [1, 1, 1, 1, 1]
+        model_pos = TemporalModelOptimized1f_anatomy(16, 2, 15, filter_widths=filter_widths, causal=False,
                                              dropout=0.25, channels=1024)
     else:
         assert False, 'posenet_name invalid'
